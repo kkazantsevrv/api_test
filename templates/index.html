@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация и личный кабинет</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Добро пожаловать!</h1>
+
+    <!-- Форма регистрации -->
+    <div id="registerForm" class="form-container">
+        <h2>Регистрация</h2>
+        <form id="register">
+            <input type="text" id="regUsername" placeholder="Имя пользователя" required>
+            <input type="password" id="regPassword" placeholder="Пароль" required>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+    </div>
+
+    <!-- Форма авторизации -->
+    <div id="loginForm" class="form-container">
+        <h2>Авторизация</h2>
+        <form id="login">
+            <input type="text" id="loginUsername" placeholder="Имя пользователя" required>
+            <input type="password" id="loginPassword" placeholder="Пароль" required>
+            <button type="submit">Войти</button>
+        </form>
+    </div>
+
+    <!-- Личный кабинет -->
+    <div id="profile" class="hidden">
+        <h2>Личный кабинет</h2>
+        <p>Добро пожаловать, <span id="profileUsername"></span>!</p>
+        <h2>Добавить заметку</h2>
+        <form id="noteForm">
+            <textarea id="noteContent" placeholder="Введите текст заметки" required></textarea>
+            <button type="submit">Добавить</button>
+        </form>
+        <button id="logout">Выйти</button>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Регистрация
+        document.getElementById('register').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (response.ok) {
+                alert('Регистрация успешна!');
+            } else {
+                const error = await response.json();
+                alert(error.error);
+            }
+        });
+
+        // Авторизация
+        document.getElementById('login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                currentUser = data.user;
+                showProfile();
+            } else {
+                const error = await response.json();
+                alert(error.error);
+            }
+        });
+
+        // Добавление заметки
+        document.getElementById('noteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = document.getElementById('noteContent').value;
+
+            const response = await fetch('/api/note', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text }),
+            });
+
+            if (response.ok) {
+                alert('Заметка успешно добавлена!');
+                document.getElementById('noteContent').value = ''; // Очищаем поле ввода
+            } else {
+                const error = await response.json();
+                alert(error.error);
+            }
+        });
+
+        // Личный кабинет
+        function showProfile() {
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('profile').classList.remove('hidden');
+            document.getElementById('profileUsername').textContent = currentUser.username;
+        }
+
+        // Выход
+        document.getElementById('logout').addEventListener('click', () => {
+            currentUser = null;
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('profile').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
