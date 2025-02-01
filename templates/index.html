@@ -51,7 +51,6 @@
         </form>
         <button id="logout">Выйти</button>
     </div>
-
     <script>
         let currentUser = null;
 
@@ -104,14 +103,14 @@
         // Добавление заметки
         document.getElementById('noteForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const text = document.getElementById('noteContent').value;
+            const content = document.getElementById('noteContent').value;
 
             const response = await fetch('/api/note', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ text: text }),
+                body: JSON.stringify({ content: content, user_id: currentUser.id }),
             });
 
             if (response.ok) {

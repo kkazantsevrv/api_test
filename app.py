@@ -16,6 +16,13 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+    notes = db.relationship('Note', backref='user', lazy=True)
+
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(500), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # user = db.relationship('User', backref=db.backref('notes', lazy=True))
 
 with app.app_context():
     db.create_all()
@@ -66,7 +73,21 @@ def api_profile(user_id):
 @app.route('/api/note', methods=['POST'])
 def api_note():
     data=request.json
-    return jsonify({"message": "Login successful", "user": {"text": data.get('text')}}), 200
+    # Проверяем, что данные переданы
+    if not data or 'content' not in data or 'user_id' not in data:
+        return jsonify({"error": "Content and user_id are required"}), 400
+    
+    content = data.get('content')
+    user_id = data.get('user_id')
+    # Проверяем, существует ли пользователь
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    new_note = Note(content=content, user_id=user_id)
+    db.session.add(new_note)
+    db.session.commit()
+    return jsonify({"message": "Note created successfully", "note": {"id": new_note.id, "content": new_note.content}}), 201
 
 # Главная страница (фронтенд)
 @app.route('/')
