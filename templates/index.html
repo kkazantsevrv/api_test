@@ -15,6 +15,14 @@
         .hidden {
             display: none;
         }
+        .notes-list {
+            margin-top: 20px;
+        }
+        .note-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -49,6 +57,8 @@
             <textarea id="noteContent" placeholder="Введите текст заметки" required></textarea>
             <button type="submit">Добавить</button>
         </form>
+        <h2>Ваши заметки</h2>
+        <div id="notesList" class="notes-list"></div>
         <button id="logout">Выйти</button>
     </div>
     <script>
@@ -94,6 +104,7 @@
                 const data = await response.json();
                 currentUser = data.user;
                 showProfile();
+                loadNotes(); // Загружаем заметки после успешной авторизации
             } else {
                 const error = await response.json();
                 alert(error.error);
@@ -102,8 +113,8 @@
 
         // Добавление заметки
         document.getElementById('noteForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const content = document.getElementById('noteContent').value;
+            e.preventDefault();
+            const content = document.getElementById('noteContent').value;
             try {
                 const response = await fetch('/api/note', {
                     method: 'POST',
@@ -114,22 +125,10 @@
                 });
 
                 if (response.ok) {
-                    const data = await response.json(); // Обрабатываем ответ один раз
+                    const data = await response.json();
                     alert('Добавлено!');
                     document.getElementById('noteContent').value = ''; // Очищаем поле ввода
-
-                    // Создаем форму с заметкой
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = '/submit';
-
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.name = 'note';
-                    input.value = data.note.content;
-
-                    form.appendChild(input);
-                    document.body.appendChild(form);
+                    loadNotes(); // Обновляем список заметок после добавления новой
                 } else {
                     const error = await response.json();
                     alert(error.error);
@@ -138,6 +137,39 @@
                 console.error('Ошибка:', error);
             }
         });
+
+        // Загрузка заметок
+        async function loadNotes() {
+            if (!currentUser) return;
+
+            const response = await fetch(`api/notes/${currentUser.id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                displayNotes(data.user.notes);
+            } else {
+                const error = await response.json();
+                alert(error.error);
+            }
+        }
+
+        // Отображение заметок
+        function displayNotes(notes) {
+            const notesList = document.getElementById('notesList');
+            notesList.innerHTML = ''; // Очищаем список перед добавлением новых заметок
+
+            notes.forEach(note => {
+                const noteItem = document.createElement('div');
+                noteItem.className = 'note-item';
+                noteItem.textContent = note.content;
+                notesList.appendChild(noteItem);
+            });
+        }
 
         // Личный кабинет
         function showProfile() {
@@ -153,7 +185,7 @@
             document.getElementById('registerForm').classList.remove('hidden');
             document.getElementById('loginForm').classList.remove('hidden');
             document.getElementById('profile').classList.add('hidden');
-            document.getElementById('form').classList.add('hidden');
+            document.getElementById('notesList').innerHTML = ''; // Очищаем список заметок при выходе
         });
     </script>
 </body>

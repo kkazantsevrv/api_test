@@ -70,13 +70,15 @@ def api_profile(user_id):
 
     return jsonify({"user": {"id": user.id, "username": user.username}}), 200
 
-@app.route('/api/profile/<int:user_id>', methods=['GET'])
+@app.route('/api/notes/<int:user_id>', methods=['GET'])
 def api_note_get(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    return jsonify({"user": {"id": user.id, "notes": user.notes}}), 200
+    notes = [{"id": note.id, "content": note.content} for note in user.notes]
+
+    return jsonify({"user": {"id": user.id, "notes": notes}}), 200
     
 
 @app.route('/api/note', methods=['POST'])
